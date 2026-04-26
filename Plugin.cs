@@ -1,18 +1,25 @@
-﻿namespace SkyRepaired;
+﻿using BepInEx;
+using HarmonyLib;
+using BepInEx.Logging;
 
-[BepInPlugin(PluginInfo.GUID, PluginInfo.Name, PluginInfo.Version)]
-public class Plugin : BaseUnityPlugin
+namespace SkyRepaired
 {
-    public Harmony harmony;
-    public static Plugin Instance { get; private set; }
-    public static ManualLogSource Logger => Instance.Logger;
 
-    void Awake()
+    [BepInPlugin(PluginInfo.GUID, PluginInfo.Name, PluginInfo.Version)]
+    public class Plugin : BaseUnityPlugin
     {
-        Instance = this;
-        harmony = new Harmony(PluginInfo.GUID);
+        public Harmony harmony;
+        public static Plugin Instance { get; private set; }
+        public static ManualLogSource Logger;
 
-        harmony.PatchAll();
-        Logger.LogInfo("Sky Repaired has finished patching methods. Enjoy the QOL fixes !");
+        void Awake()
+        {
+            Instance = this;
+            Logger = base.Logger;
+            harmony = new Harmony(PluginInfo.GUID);
+
+            harmony.PatchAll();
+            Logger.LogInfo("Sky Repaired has finished patching methods. Enjoy the QOL fixes !");
+        }
     }
 }

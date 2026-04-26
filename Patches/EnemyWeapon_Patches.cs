@@ -1,34 +1,47 @@
 ﻿using System.Reflection.Emit;
+using HarmonyLib;
+using System.Collections.Generic;
 
-namespace SkyRepaired.Patches;
-
-[HarmonyPatch(typeof(EnemyWeapon))]
-internal class EnemyWeapon_Patches
+namespace SkyRepaired.Patches
 {
-    // Not sure if this is the right way to fix it, but we'll see for now.
-    // I patched this because the laser is way too fast, partially because it's raycasted, but also because the delay
-    // between when the enemy shoots and when the damage is applied is way too short.
-    [HarmonyTranspiler]
-    [HarmonyPatch(typeof(EnemyWeapon), nameof(EnemyWeapon.checkDistanceAttack)]
-    public static IEnumerable<CodeInstruction> RaiseLaserDamageDelay(IEnumerable<CodeInstruction> instructions)
+
+    [HarmonyPatch(typeof(EnemyWeapon))]
+    public class EnemyWeapon_Patches
     {
-        var code = new List<CodeInstruction>(instructions);
-        CodeMatcher matcher = new CodeMatcher(instructions);
-
-        // Matcher, hopefully it's how it works
-        matcher.MatchForward(false,
-            new(OpCodes.Ldloc_0),
-            new(OpCodes.Callvirt),
-            new(OpCodes.Ldloc_0)
-            new(OpCodes.Ldc_R4, 0.1f)
-            );
-
-        // Check if the pattern was found before trying to modify it
-        if (matcher.IsValid)
+        // Not sure if this is the right way to fix it, but we'll see for now.
+        // I patched this because the laser is way too fast, partially because it's raycasted, but also because the delay
+        // between when the enemy shoots and when the damage is applied is way too short.
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(EnemyWeapon), nameof(EnemyWeapon.checkDistanceAttack))]
+        public static IEnumerable<CodeInstruction> RaiseLaserDamageDelay(IEnumerable<CodeInstruction> instructions)
         {
-            // Change the laser damage delay from 0.1f to 0.35f
-            matcher.Set(OpCodes.Ldc_R4, 0.35f);
-        }
+            var code = new List<CodeInstruction>(instructions);
+            CodeMatcher matcher = new CodeMatcher(instructions);
 
-        // Dude, it's like in the good ol' days, glad to work with transpilers again.
+            // Matcher, hopefully it's how it works
+            matcher.MatchStartForward(
+                new CodeMatch(OpCodes.Ldloc_0),
+                new CodeMatch(OpCodes.Callvirt),
+                new CodeMatch(OpCodes.Ldloc_0),
+                new CodeMatch(OpCodes.Ldc_R4, 0.1f)
+                );
+
+            // Check if the pattern was found before trying to modify it
+            if (matcher.IsValid)
+            {
+                // Change the laser damage delay from 0.1f to 0.35f
+                matcher.RemoveInstruction()
+                     .InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_R4, 0.35f));
+            }
+            else
+            {
+                Plugin.Logger.LogError("Couldn't match the IL !");
+            }
+
+            matcher.Start();
+
+            // Dude, it's like in the good ol' days, glad to work with transpilers again.
+            return matcher.Instructions();
+        }
     }
+}

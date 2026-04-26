@@ -10,6 +10,7 @@
 # VS shit
 .vs/
 *.csproj.user
+libs/
 
 # Build results
 [Dd]ebug/
