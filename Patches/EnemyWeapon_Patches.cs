@@ -1,6 +1,8 @@
 ﻿using System.Reflection.Emit;
 using HarmonyLib;
 using System.Collections.Generic;
+using UnityEngine;
+using System;
 
 namespace SkyRepaired.Patches
 {
@@ -21,8 +23,8 @@ namespace SkyRepaired.Patches
             // Matcher, hopefully it's how it works
             matcher.MatchStartForward(
                 new CodeMatch(OpCodes.Ldloc_0),
-                new CodeMatch(OpCodes.Callvirt),
-                new CodeMatch(OpCodes.Ldloc_0),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(GameObject), "GetComponent", generics: new Type[] { typeof(DistanceAttackItem) } )),
+                new CodeMatch(OpCodes.Ldloc_1),
                 new CodeMatch(OpCodes.Ldc_R4, 0.1f)
                 );
 
@@ -30,17 +32,18 @@ namespace SkyRepaired.Patches
             if (matcher.IsValid)
             {
                 // Change the laser damage delay from 0.1f to 0.35f
-                matcher.RemoveInstruction()
-                     .InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_R4, 0.35f));
+                matcher.Advance(3)
+                    .RemoveInstruction()
+                    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_R4, Plugin.Config.LaserDamageDelay.Value));
+                Plugin.Logger.LogInfo("[RaiseLaserDamageDelay] Successfully replaced laser damage delay.");
             }
             else
             {
-                Plugin.Logger.LogError("Couldn't match the IL !");
+                Plugin.Logger.LogError("[RaiseLaserDamageDelay] Couldn't match the IL !");
             }
 
             matcher.Start();
 
-            // Dude, it's like in the good ol' days, glad to work with transpilers again.
             return matcher.Instructions();
         }
     }

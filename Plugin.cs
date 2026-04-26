@@ -10,12 +10,14 @@ namespace SkyRepaired
     {
         public Harmony harmony;
         public static Plugin Instance { get; private set; }
-        public static ManualLogSource Logger;
+        public static ManualLogSource Logger { get; private set; }
+        public static PluginConfig Config { get; private set; }
 
         void Awake()
         {
             Instance = this;
             Logger = base.Logger;
+            Config = new PluginConfig(base.Config);
             harmony = new Harmony(PluginInfo.GUID);
 
             harmony.PatchAll();
